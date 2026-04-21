@@ -1,0 +1,1806 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hstack — Proposal Workflow Skill, Unpacked</title>
+<meta name="description" content="팀장의 사고 방식을 12단계 + 18개 규칙으로 형식화한 Claude Code 스킬. 암묵지가 스킬이 된다." />
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Fraunces"', 'Georgia', 'serif'],
+          sans: ['"IBM Plex Sans"', '"Pretendard Variable"', 'system-ui', 'sans-serif'],
+          korean: ['"Pretendard Variable"', 'Pretendard', 'system-ui', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        },
+        colors: {
+          bg:      '#1a1614',
+          bg2:     '#221d1a',
+          bg3:     '#2a2421',
+          bgdeep:  '#0e0c0a',
+          border:  '#3a322c',
+          border2: '#4a4038',
+          ink:     '#ebe4d4',
+          ink2:    '#d4ccbc',
+          muted:   '#9a9184',
+          dim:     '#6f675d',
+          gold:    '#c9a961',
+          gold2:   '#d9b870',
+          goldsoft:'#3a2f1f',
+          vermillion:'#c8574d',
+          green:   '#7fa560',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background: #1a1614;
+    color: #ebe4d4;
+    font-family: "IBM Plex Sans", "Pretendard Variable", system-ui, sans-serif;
+    font-feature-settings: "ss01", "ss02";
+  }
+  .ko { font-family: "Pretendard Variable", "IBM Plex Sans", system-ui, sans-serif; letter-spacing: -0.005em; }
+
+  .display { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 20; letter-spacing: -0.025em; line-height: 0.95; }
+  .display-italic { font-style: italic; font-variation-settings: "SOFT" 60; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 500;
+    color: #9a9184;
+  }
+  .eyebrow-gold { color: #c9a961; }
+
+  .vrule-gold { background: #c9a961; height: 2px; }
+
+  /* Pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    border: 1px solid;
+    font-size: 0.8rem; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .pill-gold { border-color: rgba(201,169,97,0.55); color: #c9a961; background: rgba(201,169,97,0.06); }
+  .pill-gold:hover { background: rgba(201,169,97,0.12); }
+  .pill-muted { border-color: #3a322c; color: #9a9184; }
+
+  /* Stat number */
+  .stat-num {
+    font-family: "Fraunces", serif; font-weight: 600; font-variation-settings: "SOFT" 10;
+    font-size: 3rem; line-height: 1; color: #c9a961;
+    font-feature-settings: "lnum";
+  }
+
+  /* Navbar */
+  .nav {
+    background: rgba(26,22,20,0.82); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(58,50,44,0.5);
+  }
+  .nav a { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: #9a9184; }
+  .nav a:hover { color: #c9a961; }
+
+  /* Hero glow */
+  .hero-glow {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 30%, rgba(201,169,97,0.08), transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 80%, rgba(200,87,77,0.04), transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Section num */
+  .section-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem; letter-spacing: 0.2em; color: #c9a961;
+  }
+
+  /* Dropcap */
+  .dropcap::first-letter {
+    font-family: "Fraunces", serif; font-weight: 600;
+    font-size: 4.8rem; line-height: 0.85; float: left;
+    padding: 0.1rem 0.7rem 0 0; color: #c9a961;
+  }
+
+  /* Margin number */
+  .margin-number {
+    position: absolute; left: -3.5rem; top: 0.45rem;
+    font-family: "Fraunces", serif; font-style: italic;
+    font-size: 1.05rem; color: #c9a961;
+    width: 3rem; text-align: right;
+  }
+  @media (max-width: 900px) {
+    .margin-number { position: static; text-align: left; display: inline-block; margin-right: 0.75rem; }
+  }
+
+  /* Pullquote */
+  .pullquote {
+    font-family: "Fraunces", serif; font-style: italic;
+    font-variation-settings: "SOFT" 60;
+    line-height: 1.08; letter-spacing: -0.025em;
+  }
+
+  /* Doc window */
+  .doc-window {
+    border: 1px solid #3a322c;
+    background: #0e0c0a;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+  .doc-window-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.55rem 1rem;
+    background: #1a1614; color: #9a9184;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid #3a322c;
+  }
+  .doc-window-header .dots { display: flex; gap: 0.35rem; }
+  .doc-window-header .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #3a322c; }
+
+  pre.ascii {
+    background: #0e0c0a;
+    border: 1px solid #3a322c;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    line-height: 1.55;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: #d4ccbc;
+  }
+
+  /* Entry */
+  .entry {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid #2a2421;
+  }
+  .entry:first-of-type { border-top: 1px solid #3a322c; }
+  .entry:last-of-type { border-bottom: 1px solid #3a322c; }
+  .entry-num {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "SOFT" 30;
+    font-size: 1.75rem; color: #c9a961; line-height: 1;
+  }
+  .entry-title {
+    font-family: "Fraunces", serif; font-weight: 500;
+    font-size: 1.4rem; line-height: 1.2; letter-spacing: -0.01em;
+    color: #ebe4d4;
+  }
+
+  /* Stamp */
+  .stamp {
+    display: inline-flex; align-items: center;
+    padding: 0.15rem 0.55rem 0.1rem;
+    border: 1.5px solid #c8574d; color: #e08a80;
+    font-family: "Pretendard Variable", "IBM Plex Mono", sans-serif;
+    font-size: 0.65rem; font-weight: 600;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    transform: rotate(-2deg); background: rgba(200,87,77,0.04);
+  }
+  .stamp-muted { border-color: #4a4038; color: #9a9184; transform: rotate(-1deg); }
+
+  /* =========== §II SKILL.md preview =========== */
+  .md-preview {
+    height: 560px; overflow: auto;
+    padding: 1.5rem 1.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem; line-height: 1.6;
+    color: #d4ccbc;
+    background: #0e0c0a;
+  }
+  .md-preview .md-frontmatter { color: #9a9184; }
+  .md-preview .md-h1 { color: #c9a961; font-weight: 600; }
+  .md-preview .md-h2 { color: #c9a961; }
+  .md-preview .md-h3 { color: #d9b870; }
+  .md-preview .md-code { color: #d4ccbc; background: #1a1614; padding: 0 0.25rem; }
+  .md-preview .md-bold { color: #ebe4d4; font-weight: 600; }
+  .md-preview .md-italic { color: #d4ccbc; font-style: italic; }
+  .md-preview .md-comment { color: #6f675d; }
+  .md-preview .md-arrow { color: #c9a961; }
+  .md-preview::-webkit-scrollbar { width: 6px; }
+  .md-preview::-webkit-scrollbar-thumb { background: #3a322c; }
+
+  .md-tabs { display: flex; gap: 0; border-bottom: 1px solid #3a322c; background: #1a1614; }
+  .md-tab {
+    padding: 0.75rem 1.25rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #9a9184; cursor: pointer; background: transparent;
+    border: none; border-right: 1px solid #3a322c;
+    transition: all 0.15s;
+  }
+  .md-tab:last-child { border-right: none; }
+  .md-tab:hover { color: #c9a961; }
+  .md-tab.active { color: #c9a961; background: rgba(201,169,97,0.06); }
+  .md-tab.active::after {
+    content: ''; display: block;
+    margin: 0.5rem -1.25rem -0.75rem;
+    height: 2px; background: #c9a961;
+  }
+
+  /* =========== §VI STAGE TRACE =========== */
+  .trace {
+    border: 1px solid #3a322c;
+    background: #1f1a17;
+    box-shadow: 0 0 0 1px rgba(201,169,97,0.08), 0 40px 80px -40px rgba(0,0,0,0.6);
+  }
+
+  /* Numbered pill tabs on progress line */
+  .stage-pills {
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.5rem 2rem;
+    background: #1a1614;
+    border-bottom: 1px solid #3a322c;
+  }
+  .stage-pills::before {
+    content: ''; position: absolute;
+    top: 50%; left: 3rem; right: 3rem;
+    height: 1px; background: #3a322c; z-index: 0;
+  }
+  .stage-pill {
+    position: relative; z-index: 1;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid #4a4038;
+    background: #1a1614;
+    color: #9a9184;
+    font-family: "Fraunces", serif;
+    font-size: 0.9rem; font-weight: 500;
+    font-feature-settings: "lnum";
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .stage-pill:hover {
+    border-color: #c9a961; color: #c9a961;
+    transform: scale(1.08);
+  }
+  .stage-pill.visited {
+    border-color: #6f675d; color: #d4ccbc;
+    background: #2a2421;
+  }
+  .stage-pill.active {
+    background: #c9a961; border-color: #c9a961;
+    color: #1a1614; font-weight: 600;
+    box-shadow: 0 0 0 5px rgba(201,169,97,0.15);
+    transform: scale(1.1);
+  }
+
+  /* Panel */
+  .trace-panel { padding: 2.5rem 2.5rem 2rem; position: relative; min-height: 540px; }
+  .trace-panel-inner { transition: opacity 0.2s ease; }
+  .trace-panel.transitioning .trace-panel-inner { opacity: 0.15; }
+
+  .trace-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem; }
+
+  .trace-numbadge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: 50%;
+    border: 1.5px solid #c9a961;
+    color: #c9a961; font-family: "Fraunces", serif;
+    font-size: 0.95rem; font-weight: 600;
+    font-feature-settings: "lnum";
+    flex-shrink: 0;
+    background: rgba(201,169,97,0.06);
+  }
+
+  .trace-title-row { display: flex; align-items: center; gap: 0.9rem; }
+  .trace-title {
+    font-family: "Fraunces", serif; font-weight: 500;
+    font-size: 2rem; line-height: 1.1; letter-spacing: -0.015em;
+    color: #ebe4d4;
+  }
+  .trace-goal {
+    color: #9a9184; font-size: 1rem; margin-top: 0.35rem; margin-left: 2.9rem;
+    max-width: 52rem; line-height: 1.5;
+  }
+
+  .source-ref {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #3a322c;
+    color: #9a9184;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    border-radius: 4px;
+    transition: all 0.15s; cursor: pointer;
+  }
+  .source-ref:hover { color: #c9a961; border-color: #c9a961; }
+
+  /* Terminal inside panel */
+  .terminal {
+    margin-top: 1.5rem;
+    border: 1px solid rgba(201,169,97,0.3);
+    background: #0e0c0a;
+    border-radius: 2px;
+    min-height: 180px;
+    padding: 1.25rem 1.5rem;
+    font-family: "IBM Plex Mono", monospace;
+    position: relative;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+  }
+  .terminal-head {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.7rem; color: #7fa560;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+  .terminal-head .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #7fa560; box-shadow: 0 0 6px rgba(127,165,96,0.5);
+  }
+  .terminal-body {
+    font-size: 0.95rem; color: #ebe4d4; line-height: 1.7;
+  }
+  .term-prompt-line { display: block; }
+  .terminal-body .prompt-prefix {
+    color: #c9a961; margin-right: 0.65rem; font-weight: 500;
+  }
+  .typed-prompt, .typed-response { white-space: pre-wrap; }
+
+  /* Response block below prompt */
+  .term-response {
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed rgba(201,169,97,0.18);
+  }
+  .term-response-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #c9a961; margin-bottom: 0.5rem;
+  }
+  .term-response-label::before {
+    content: ''; display: inline-block;
+    width: 3px; height: 0.9rem; background: #c9a961;
+  }
+  .typed-response {
+    font-size: 0.88rem; line-height: 1.65;
+    color: #b9af9e;
+  }
+
+  .caret {
+    display: inline-block; width: 0.5em; height: 1.05em;
+    background: #c9a961;
+    vertical-align: -0.15em; margin-left: 2px;
+    animation: blink 1s step-start infinite;
+  }
+  .caret.response-caret {
+    height: 0.95em; vertical-align: -0.1em;
+  }
+  .terminal.done .caret {
+    animation: none;
+    background: rgba(201,169,97,0.3);
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Narration */
+  .narration {
+    margin-top: 1.5rem;
+    font-family: "Pretendard Variable", sans-serif;
+    font-size: 1rem; line-height: 1.65;
+    color: #d4ccbc;
+    max-width: 48rem;
+  }
+
+  /* Metadata strip */
+  .meta-strip {
+    margin-top: 1.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2a2421;
+    display: flex; flex-wrap: wrap; gap: 2rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem; color: #9a9184;
+  }
+  .meta-strip strong {
+    color: #c9a961; font-weight: 500; margin-right: 0.4rem;
+  }
+  .meta-strip .out-text { color: #d4ccbc; }
+
+  /* Details collapsible */
+  details.stage-details {
+    margin-top: 1rem;
+    border-top: 1px dashed #3a322c;
+    padding-top: 1rem;
+  }
+  details.stage-details > summary {
+    list-style: none; cursor: pointer;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem; color: #9a9184;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+  }
+  details.stage-details > summary::-webkit-details-marker { display: none; }
+  details.stage-details > summary::after {
+    content: '▾'; transition: transform 0.2s; color: #6f675d;
+  }
+  details.stage-details[open] > summary::after { transform: rotate(180deg); color: #c9a961; }
+  details.stage-details[open] > summary { color: #c9a961; }
+  .stage-details-body {
+    margin-top: 1rem;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem 2rem;
+  }
+  .stage-details-body h5 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: #9a9184; margin-bottom: 0.45rem;
+  }
+  .stage-details-body ul { list-style: none; padding: 0; margin: 0; }
+  .stage-details-body li {
+    font-family: "Pretendard Variable", sans-serif;
+    font-size: 0.85rem; color: #d4ccbc;
+    padding: 0.2rem 0 0.2rem 1.25rem; position: relative;
+    line-height: 1.5;
+  }
+  .stage-details-body li::before {
+    content: '·'; position: absolute; left: 0.4rem; color: #c9a961;
+  }
+  .stage-details-body .file-line {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem; color: #d4ccbc;
+    padding: 0.2rem 0;
+  }
+  .stage-details-body .file-line.out { color: #c9a961; }
+
+  /* Controls */
+  .trace-controls {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    border-top: 1px solid #3a322c; background: #1a1614;
+  }
+  .ctrl {
+    width: 2.25rem; height: 2.25rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #3a322c; background: transparent; color: #d4ccbc;
+    cursor: pointer; transition: all 0.15s;
+    font-size: 0.75rem;
+  }
+  .ctrl:hover { border-color: #c9a961; color: #c9a961; }
+  .ctrl.play {
+    width: 2.75rem;
+    border-color: #c9a961; color: #c9a961;
+  }
+  .ctrl.play:hover { background: rgba(201,169,97,0.1); }
+  .speed-group { display: flex; border: 1px solid #3a322c; }
+  .speed-btn {
+    padding: 0.35rem 0.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem; font-weight: 500;
+    color: #9a9184; background: transparent; cursor: pointer;
+    border: none; border-right: 1px solid #3a322c;
+  }
+  .speed-btn:last-child { border-right: none; }
+  .speed-btn.active { background: rgba(201,169,97,0.1); color: #c9a961; }
+  .speed-btn:hover { color: #c9a961; }
+  .trace-progress {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem; color: #6f675d; letter-spacing: 0.1em;
+  }
+
+  /* =========== RULES FILTER =========== */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #3a322c;
+    margin-bottom: 1rem;
+  }
+  .filter-chip {
+    padding: 0.4rem 0.85rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem; font-weight: 500;
+    color: #9a9184; background: transparent;
+    border: 1px solid #3a322c;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-chip:hover { color: #c9a961; border-color: #4a4038; }
+  .filter-chip.active {
+    background: #c9a961; color: #1a1614;
+    border-color: #c9a961;
+  }
+  .rule-row {
+    display: grid; grid-template-columns: 4rem 1fr auto; gap: 1.25rem;
+    padding: 1.1rem 0; border-top: 1px solid #2a2421;
+    cursor: pointer; align-items: start;
+    transition: background 0.15s, opacity 0.2s;
+  }
+  .rule-row:first-of-type { border-top: 1px solid #3a322c; }
+  .rule-row:last-of-type { border-bottom: 1px solid #3a322c; }
+  .rule-row:hover { background: rgba(201,169,97,0.03); }
+  .rule-row.hidden { display: none; }
+  .rule-id {
+    font-family: "Fraunces", serif;
+    font-variation-settings: "SOFT" 20;
+    font-size: 1.5rem; color: #ebe4d4; line-height: 1;
+    font-feature-settings: "lnum";
+  }
+  .rule-row.base .rule-id { color: #c9a961; }
+  .rule-title {
+    font-family: "Fraunces", serif; font-weight: 500;
+    font-size: 1.25rem; letter-spacing: -0.015em;
+    color: #ebe4d4;
+  }
+  .rule-summary {
+    margin-top: 0.3rem;
+    font-family: "Pretendard Variable", sans-serif;
+    font-size: 0.9rem; color: #9a9184; line-height: 1.5;
+  }
+  .rule-stages-ref {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.08em;
+    color: #6f675d;
+    padding-top: 0.5rem;
+  }
+  .rule-details {
+    grid-column: 2 / -1;
+    padding-top: 0.8rem; margin-top: 0.8rem;
+    border-top: 1px dashed #3a322c;
+    display: none;
+  }
+  .rule-row.open .rule-details { display: block; }
+  .rule-row .chev { color: #6f675d; transition: transform 0.2s; padding-top: 0.2rem; }
+  .rule-row.open .chev { transform: rotate(90deg); color: #c9a961; }
+
+  ::selection { background: #c9a961; color: #1a1614; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #1a1614; }
+  ::-webkit-scrollbar-thumb { background: #3a322c; border: 2px solid #1a1614; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a4038; }
+
+  .ornament {
+    display: flex; align-items: center; justify-content: center; gap: 1rem;
+    color: #4a4038; font-family: "Fraunces", serif; font-style: italic;
+    font-size: 1.1rem;
+  }
+  .ornament::before, .ornament::after {
+    content: ''; flex: 1; border-top: 1px solid #3a322c; max-width: 80px;
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- NAV -->
+<header class="nav fixed top-0 inset-x-0 z-40">
+  <div class="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 text-ink">
+      <span class="display text-lg font-semibold">hstack<span class="text-gold">.</span></span>
+    </a>
+    <nav class="hidden md:flex items-center gap-6">
+      <a href="#origin">Origin</a>
+      <a href="#anatomy">SKILL.md</a>
+      <a href="#input">Input</a>
+      <a href="#rules">Rules</a>
+      <a href="#concepts">Concepts</a>
+      <a href="#stages">Stages</a>
+      <a href="#start">Start</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section id="top" class="relative overflow-hidden pt-32 md:pt-44 pb-24">
+  <div class="hero-glow"></div>
+  <div class="max-w-5xl mx-auto px-6 relative text-center">
+    <h1 class="display text-[clamp(4.5rem,14vw,10.5rem)] font-semibold leading-[0.92] text-ink">
+      <span class="block">hstack<span class="text-gold">.</span></span>
+    </h1>
+    <p class="ko mt-10 text-xl md:text-2xl text-ink2 max-w-2xl mx-auto leading-[1.55]">
+      팀장의 사고 방식을 <span class="text-gold font-medium">12단계 워크플로우</span>와
+      <span class="text-gold font-medium">18개 상호작용 규칙</span>으로 형식화한 Claude Code 스킬.
+      원천 자료에서 제출 가능한 초안까지.
+    </p>
+    <div class="mt-20 grid grid-cols-2 gap-10 max-w-xl mx-auto">
+      <div><div class="stat-num">12</div><div class="eyebrow mt-2">Stages</div></div>
+      <div><div class="stat-num">18</div><div class="eyebrow mt-2">Rules</div></div>
+    </div>
+    <div class="mt-14">
+      <a href="#origin" class="inline-flex items-center gap-2 px-6 py-3 border border-gold/50 text-gold font-mono text-xs tracking-[0.2em] uppercase hover:bg-gold/10 rounded-full transition">
+        Start Exploring
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- § I ORIGIN -->
+<section id="origin" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+      <div class="md:col-span-3 md:sticky md:top-24 md:self-start">
+        <div class="section-num">§ I · THE STORY</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          탄생 <span class="display-italic text-gold">배경</span>
+        </h2>
+      </div>
+      <div class="md:col-span-9">
+        <p class="ko text-xl md:text-2xl leading-[1.5] text-ink2 mb-14 max-w-3xl dropcap">
+          hstack은 처음부터 설계된 프레임워크가 아니다. 한 번의 실패, 한 번의 성공 세션, 그리고 그 세션을 되감아 읽은 결과물이다.
+        </p>
+        <ol class="max-w-3xl space-y-12 md:pl-14">
+          <li class="relative">
+            <span class="margin-number">01</span>
+            <div class="eyebrow mb-2">촉발 · The Trigger</div>
+            <h3 class="display text-2xl md:text-[1.7rem] font-medium text-ink mb-3 ko">두 개의 정부 과제, 촉박한 일정</h3>
+            <p class="ko text-lg leading-relaxed text-ink2">
+              팀이 두 개의 정부 과제 제안서를 매우 촉박한 일정 안에 동시에 작성해야 하는 상황이 발생했다. 수동으로 감당하기 어려운 분량이었다.
+            </p>
+          </li>
+          <li class="relative">
+            <span class="margin-number">02</span>
+            <div class="eyebrow mb-2" style="color:#e08a80">첫 시도, 그리고 실패 · The Failure</div>
+            <h3 class="display text-2xl md:text-[1.7rem] font-medium text-ink mb-3 ko">
+              <span class="display-italic">"skills를 조합한 agent를 만들자"</span> — 작동하지 않았다
+            </h3>
+            <p class="ko text-lg leading-relaxed text-ink2">
+              처음에는 generic한 접근을 시도했다. 여러 skill을 pipeline으로 연결한 agent를 구현했지만, 출력이 기대에 미치지 못했다. <span class="display-italic">구조는 있었으나 판단이 없었다.</span>
+            </p>
+          </li>
+          <li class="relative">
+            <span class="margin-number">03</span>
+            <div class="eyebrow eyebrow-gold mb-2">전환점 · The Turn</div>
+            <h3 class="display text-2xl md:text-[1.7rem] font-medium text-ink mb-3 ko">팀장 형진님이 직접 prompting을 맡다</h3>
+            <p class="ko text-lg leading-relaxed text-ink2">
+              어느 Claude Code 세션에서 형진님이 prompting을 직접 맡았다. 세션 시작부터 초안 완성까지, 그가 대화를 이끌었다. 그리고 <span class="text-gold font-medium">실제로 쓸 수 있는 초안</span>이 나왔다.
+            </p>
+          </li>
+          <li class="relative">
+            <span class="margin-number">04</span>
+            <div class="eyebrow mb-2">관찰 · The Observation</div>
+            <h3 class="display text-2xl md:text-[1.7rem] font-medium text-ink mb-3 ko">그 세션을 되감아 읽다</h3>
+            <p class="ko text-lg leading-relaxed text-ink2">
+              무엇이 달랐는가 — 어떤 순서로 질문을 던졌는가, 어떤 판단 기준을 사용했는가, 어떤 충돌을 어떻게 해결했는가. 그 안에는 반복되는 <span class="display-italic">사고 패턴</span>이 있었다.
+            </p>
+          </li>
+          <li class="relative">
+            <span class="margin-number">05</span>
+            <div class="eyebrow eyebrow-gold mb-2">형식화 · The Codification</div>
+            <h3 class="display text-2xl md:text-[1.7rem] font-medium text-ink mb-3 ko">12단계 + 18개 규칙</h3>
+            <p class="ko text-lg leading-relaxed text-ink2">
+              그 성공 세션을 리버스 엔지니어링해서 형진님의 의사결정·검증·피드백 처리 방식을 추출했고, 이를 <span class="display-italic text-ink font-medium">12단계 + 18개 규칙</span>으로 구조화해 Claude Code 스킬로 변환했다. 이름의 "h"는 형진님, "stack"은 그의 사고 스택. <span class="text-dim">(명명 규칙은 YC CEO Garry Tan의 <code class="font-mono text-sm">gstack</code>을 따랐다.)</span>
+            </p>
+          </li>
+        </ol>
+        <figure class="mt-24 py-14 border-y border-gold/35 relative">
+          <div class="absolute -top-3 left-0 bg-bg px-4 eyebrow eyebrow-gold">Thesis</div>
+          <blockquote class="pullquote text-3xl md:text-[3.25rem] text-ink leading-[1.1] ko">
+            몸에 밴 <span class="text-gold">판단</span>이<br/>
+            문서에 적힌 <span class="text-gold">절차</span>가 된다.
+          </blockquote>
+          <figcaption class="pullquote mt-6 text-3xl md:text-5xl text-gold leading-[1.1] ko">
+            암묵지가 스킬이 된다.
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-7xl mx-auto px-6"><div class="ornament py-4">❦</div></div>
+
+<!-- § II SKILL.md ANATOMY -->
+<section id="anatomy" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+      <div class="md:col-span-4">
+        <div class="section-num">§ II · ANATOMY</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          SKILL.md<br/>
+          <span class="display-italic text-gold">해부도</span>
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg md:text-xl leading-relaxed text-ink2 max-w-2xl">
+          Claude Code 스킬이란 <span class="display-italic text-gold">Markdown 파일 하나로 정의된 재사용 가능한 워크플로우</span>이다.
+          frontmatter의 description이 특정 조건과 일치하면 자동으로 활성화된다.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+      <!-- Left: what's inside the folder -->
+      <div class="md:col-span-4 space-y-10">
+        <div>
+          <div class="eyebrow eyebrow-gold mb-3">File Tree</div>
+          <div class="doc-window">
+            <div class="doc-window-header">
+              <div class="flex items-center gap-3"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span>hstack/</span></div>
+              <span>3 files</span>
+            </div>
+            <div class="p-4 font-mono text-[0.8rem] leading-relaxed text-ink2">
+<pre><span class="text-ink">hstack/</span>
+├── <span class="text-gold">SKILL.md</span>
+│   <span class="text-dim">메인 워크플로우</span>
+│   <span class="text-dim">~1,200 lines</span>
+├── architecture-review-ko.md
+│   <span class="text-dim">6단계 브레인스토밍 상세</span>
+└── constraint-checking-ko.md
+    <span class="text-dim">3·9단계 제약조건 상세</span></pre>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="eyebrow eyebrow-gold mb-3">Trigger Phrases</div>
+          <p class="ko text-sm text-ink2 leading-relaxed mb-4">사용자 메시지에 다음 단어가 나타나면 자동 활성화된다.</p>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="pill pill-gold text-xs" style="padding:0.25rem 0.65rem">RFP</span>
+            <span class="pill pill-gold text-xs" style="padding:0.25rem 0.65rem">사업계획서</span>
+            <span class="pill pill-gold text-xs" style="padding:0.25rem 0.65rem">제안서</span>
+            <span class="pill pill-gold text-xs" style="padding:0.25rem 0.65rem">공모</span>
+            <span class="pill pill-gold text-xs" style="padding:0.25rem 0.65rem">grant proposal</span>
+            <span class="pill pill-muted text-xs" style="padding:0.25rem 0.65rem ko">이거 작성 좀 도와줘</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="eyebrow eyebrow-gold mb-3">Structure</div>
+          <ul class="space-y-2 text-ink2 text-sm">
+            <li class="flex items-baseline gap-3"><span class="font-mono text-gold text-xs">§0</span><span class="ko">Frontmatter — 활성화 조건</span></li>
+            <li class="flex items-baseline gap-3"><span class="font-mono text-gold text-xs">§1</span><span class="ko">워크플로우 개요 — 12단계 목록</span></li>
+            <li class="flex items-baseline gap-3"><span class="font-mono text-gold text-xs">§2</span><span class="ko">상호작용 프로토콜 — 18개 규칙</span></li>
+            <li class="flex items-baseline gap-3"><span class="font-mono text-gold text-xs">§3</span><span class="ko">12단계 상세 — 각 단계의 입력·산출·완료 기준</span></li>
+            <li class="flex items-baseline gap-3"><span class="font-mono text-gold text-xs">§4</span><span class="ko">참조 파일 — 보조 문서 링크</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right: content preview -->
+      <div class="md:col-span-8">
+        <div class="eyebrow eyebrow-gold mb-3">Preview · hstack/SKILL.md</div>
+        <div class="doc-window">
+          <div class="md-tabs">
+            <button class="md-tab active" data-md="frontmatter">Frontmatter</button>
+            <button class="md-tab" data-md="workflow">Workflow</button>
+            <button class="md-tab" data-md="rules">Rules Index</button>
+          </div>
+          <div class="md-preview" id="md-preview"></div>
+        </div>
+        <p class="mt-3 eyebrow text-right">
+          <span class="text-dim">전체 문서 →</span> <span class="text-muted">hstack/SKILL.md</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="max-w-7xl mx-auto px-6"><div class="ornament py-4">❦</div></div>
+
+<!-- § III INPUT -->
+<section id="input" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+      <div class="md:col-span-4">
+        <div class="section-num">§ III · INPUT INDEX</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          6개<br/>
+          <span class="display-italic text-gold">카테고리</span>
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg md:text-xl leading-relaxed text-ink2 max-w-2xl">
+          1단계 진입 전, 원천 자료를 용도별로 구분해 <code class="font-mono text-gold">input/</code> 아래 6개 서브폴더에 배치한다. 구분이 명확하면 이후 모든 단계의 정확도가 올라간다.
+        </p>
+      </div>
+    </div>
+
+    <div class="mb-12 max-w-3xl">
+      <div class="doc-window">
+        <div class="doc-window-header">
+          <div class="flex items-center gap-3">
+            <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+            <span>input/ — tree</span>
+          </div>
+          <span>6 folders</span>
+        </div>
+        <div class="p-6 font-mono text-sm leading-relaxed">
+<pre><span class="text-ink">input/</span>
+├── <span class="text-gold">rfp/</span>             <span class="text-dim"># 공모공고 PDF (필수)</span>
+├── <span class="text-gold">template/</span>        <span class="text-dim"># 제안서 양식 PDF (필수)</span>
+├── <span class="text-gold">company_profile/</span> <span class="text-dim"># 주관사·참여사·수요기관 (필수)</span>
+├── <span class="text-muted">meeting/</span>         <span class="text-dim"># 회의록 (선택)</span>
+├── <span class="text-muted">reference/</span>       <span class="text-dim"># 타 기관 초안·예시 (선택)</span>
+└── <span class="text-muted">sample_data/</span>     <span class="text-dim"># 현장 데이터 샘플 (선택)</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div id="folders"></div>
+  </div>
+</section>
+
+<!-- § IV RULES -->
+<section id="rules" class="py-24 border-t border-border/60">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-10">
+      <div class="md:col-span-4">
+        <div class="section-num">§ IV · THE PROTOCOL</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          18개<br/>
+          <span class="display-italic text-gold">Interaction Rules</span>
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg md:text-xl leading-relaxed text-ink2 max-w-2xl">
+          18개 규칙은 모두 전 과정에서 적용되지만, 단계마다 <span class="display-italic text-gold">특히 중요한 규칙</span>이 다르다.
+          아래 필터로 특정 단계에서 활성화되는 규칙만 볼 수 있다.
+        </p>
+      </div>
+    </div>
+    <div class="filter-bar" id="rule-filter"></div>
+    <div id="rule-rows"></div>
+  </div>
+</section>
+
+<div class="max-w-7xl mx-auto px-6"><div class="ornament py-4">❦</div></div>
+
+<!-- § V CONCEPTS -->
+<section id="concepts" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+      <div class="md:col-span-4">
+        <div class="section-num">§ V · CORE CONCEPTS</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          hstack을<br/>
+          <span class="display-italic text-gold">다르게</span> 만드는 것
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg md:text-xl leading-relaxed text-ink2 max-w-2xl">
+          상태·판단·검증을 <span class="display-italic text-gold">명시적으로 추적</span>하기 위한 3개의 핵심 개념이 전체를 지탱한다.
+        </p>
+      </div>
+    </div>
+
+    <article class="grid grid-cols-1 md:grid-cols-12 gap-10 py-14 border-t border-border">
+      <header class="md:col-span-4">
+        <div class="eyebrow eyebrow-gold">Concept 01</div>
+        <h3 class="display text-3xl md:text-[2.25rem] font-medium mt-3 text-ink leading-tight ko">
+          인식론적 상태<br/><span class="display-italic text-gold">추적</span>
+        </h3>
+        <p class="ko text-base leading-relaxed text-ink2 mt-4">
+          제안서의 모든 주장은 다섯 가지 인식론적 상태 중 하나를 가진다. <code class="font-mono text-vermillion text-sm">[미검증]</code>이 섞인 채 본문에 들어가지 않도록, 내용 생성 시점부터 명시적으로 추적한다.
+        </p>
+      </header>
+      <div class="md:col-span-8">
+        <div class="doc-window">
+          <div class="doc-window-header">
+            <div class="flex items-center gap-3"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span>epistemic_states.md</span></div>
+            <span>5 states</span>
+          </div>
+          <table class="w-full text-sm font-mono">
+            <thead class="text-muted">
+              <tr class="border-b border-border"><th class="text-left px-5 py-2.5 font-normal tracking-widest uppercase text-xs">상태</th><th class="text-left px-5 py-2.5 font-normal tracking-widest uppercase text-xs">표기</th><th class="text-left px-5 py-2.5 font-normal tracking-widest uppercase text-xs">처리</th></tr>
+            </thead>
+            <tbody class="text-ink2">
+              <tr class="border-b border-border/50"><td class="px-5 py-2.5 ko">확인됨</td><td class="px-5 py-2.5 text-dim">—</td><td class="px-5 py-2.5 ko">그대로 사용</td></tr>
+              <tr class="border-b border-border/50"><td class="px-5 py-2.5 ko">팀 과제</td><td class="px-5 py-2.5 text-gold">[과제]</td><td class="px-5 py-2.5 ko">일정에 포함</td></tr>
+              <tr class="border-b border-border/50"><td class="px-5 py-2.5 ko">미검증</td><td class="px-5 py-2.5 text-vermillion">[미검증]</td><td class="px-5 py-2.5 ko">외부 출처 확보 전 사용 금지</td></tr>
+              <tr class="border-b border-border/50"><td class="px-5 py-2.5 ko">외부 확인 필요</td><td class="px-5 py-2.5 text-vermillion">[확인 필요: 누구]</td><td class="px-5 py-2.5 ko">외부 체크리스트 등재</td></tr>
+              <tr><td class="px-5 py-2.5 ko">보류</td><td class="px-5 py-2.5 text-dim">[보류: 이유]</td><td class="px-5 py-2.5 ko">해당 섹션 격리</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="grid grid-cols-1 md:grid-cols-12 gap-10 py-14 border-t border-border">
+      <header class="md:col-span-4 md:order-2">
+        <div class="eyebrow eyebrow-gold">Concept 02</div>
+        <h3 class="display text-3xl md:text-[2.25rem] font-medium mt-3 text-ink leading-tight ko">
+          비례적<br/><span class="display-italic text-gold">검증</span>
+        </h3>
+        <p class="ko text-base leading-relaxed text-ink2 mt-4">
+          검증 강도는 중요도에 비례한다. 평가 배점 직결 수치는 엄격하게, 배경 설명은 가볍게. <span class="display-italic">과검증도 낭비다.</span>
+        </p>
+      </header>
+      <div class="md:col-span-8 md:order-1 space-y-2">
+        <div class="grid grid-cols-12 border border-border">
+          <div class="col-span-3 p-5 bg-bg2 flex flex-col justify-between">
+            <span class="text-2xl">🔴</span>
+            <div class="font-mono text-[0.65rem] tracking-widest uppercase mt-3 text-vermillion">High</div>
+            <div class="display text-xl italic mt-1 text-ink ko">고중요도</div>
+          </div>
+          <div class="col-span-9 p-5 border-l border-border">
+            <div class="eyebrow">요약·표지·평가 배점 직결 수치·TRL·예산 총액</div>
+            <p class="ko text-sm text-ink2 mt-2 leading-relaxed">원천 문서까지 소급, 출처 명시 필수.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-12 border border-border">
+          <div class="col-span-3 p-5 bg-bg2 flex flex-col justify-between">
+            <span class="text-2xl">🟠</span>
+            <div class="font-mono text-[0.65rem] tracking-widest uppercase mt-3 text-gold">Mid</div>
+            <div class="display text-xl italic mt-1 text-ink ko">중중요도</div>
+          </div>
+          <div class="col-span-9 p-5 border-l border-border">
+            <div class="eyebrow">본문 핵심 주장·경쟁 비교·일정 마일스톤</div>
+            <p class="ko text-sm text-ink2 mt-2 leading-relaxed">내부 일관성 + 원천 자료 대조.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-12 border border-border">
+          <div class="col-span-3 p-5 bg-bg2 flex flex-col justify-between">
+            <span class="text-2xl">🟡</span>
+            <div class="font-mono text-[0.65rem] tracking-widest uppercase mt-3 text-green">Low</div>
+            <div class="display text-xl italic mt-1 text-ink ko">저중요도</div>
+          </div>
+          <div class="col-span-9 p-5 border-l border-border">
+            <div class="eyebrow">배경 설명·맥락 서술·보조 예시</div>
+            <p class="ko text-sm text-ink2 mt-2 leading-relaxed">내부 일관성만 확인.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="grid grid-cols-1 md:grid-cols-12 gap-10 py-14 border-y border-border">
+      <header class="md:col-span-4">
+        <div class="eyebrow eyebrow-gold">Concept 03</div>
+        <h3 class="display text-3xl md:text-[2.25rem] font-medium mt-3 text-ink leading-tight ko">
+          인수인계<br/><span class="display-italic text-gold">산출물</span>
+        </h3>
+        <p class="ko text-base leading-relaxed text-ink2 mt-4">
+          프로젝트는 한 세션에서 끝나지 않는다. 12단계에서 <span class="font-medium">현황 추적표·외부 확인 체크리스트·주의 사항</span>을 명시적으로 남겨, 다음 작업자가 이어받을 수 있게 한다.
+        </p>
+      </header>
+      <div class="md:col-span-8">
+        <div class="doc-window">
+          <div class="doc-window-header">
+            <div class="flex items-center gap-3"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span>handover.md</span></div>
+            <span>stage 12 artifact</span>
+          </div>
+          <div class="p-6 font-mono text-xs leading-relaxed text-ink2">
+<pre><span class="text-gold">## 현황 추적</span>
+| 섹션  | 상태        | TBD 항목                      |
+|------|-------------|-------------------------------|
+| §1   | <span class="text-green">완료</span>        | —                             |
+| §2.1 | <span class="text-green">완료</span>        | —                             |
+| §4.3 | <span class="text-gold">TBD 있음</span>    | 파트너 B 계량 수치 · 04-20까지 |
+
+<span class="text-gold">## 외부 확인 체크리스트</span>
+- 파트너 B 배터리 용량 수치 <span class="text-muted">(규칙 15)</span>
+- 시장 규모 수치 출처 확정 <span class="text-muted">(§5.2 [미검증])</span>
+
+<span class="text-gold">## 다음 작업자에게 주의</span>
+- §4.3 재작성 시 규칙 15(파트너 교차 검증) 재적용 필수</pre>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- § VI STAGE TRACE -->
+<section id="stages" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12">
+      <div class="md:col-span-4">
+        <div class="section-num">§ VI · THE WORKFLOW</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          12단계<br/><span class="display-italic text-gold">Stage Trace</span>
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg md:text-xl leading-relaxed text-ink2 max-w-2xl">
+          각 단계에서 사용자가 실제로 타이핑하는 <span class="display-italic text-gold">프롬프트</span>와 그에 따른 산출·활성 규칙을 따라가며 확인한다.
+          <span class="text-dim block mt-2 text-base">▶ 버튼으로 자동 재생 · 0.5×/1×/2× 속도 조절.</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="trace">
+      <div class="stage-pills" id="stage-pills"></div>
+      <div class="trace-panel" id="trace-panel">
+        <div class="trace-panel-inner" id="trace-panel-inner"></div>
+      </div>
+      <div class="trace-controls">
+        <div class="flex items-center gap-4">
+          <div class="flex gap-2">
+            <button class="ctrl" id="trace-prev" title="이전">⏮</button>
+            <button class="ctrl play" id="trace-play" title="재생/일시정지">▶</button>
+            <button class="ctrl" id="trace-next" title="다음">⏭</button>
+          </div>
+          <div class="speed-group">
+            <button class="speed-btn" data-speed="0.5">0.5×</button>
+            <button class="speed-btn active" data-speed="1">1×</button>
+            <button class="speed-btn" data-speed="2">2×</button>
+          </div>
+        </div>
+        <div class="trace-progress"><span id="trace-idx">01</span> / 12</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- § VII START -->
+<section id="start" class="py-24 border-t border-border/60">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-10">
+      <div class="md:col-span-4">
+        <div class="section-num">§ VII · INSTALLATION</div>
+        <div class="vrule-gold mt-3 mb-5 w-10"></div>
+        <h2 class="display text-4xl md:text-5xl font-medium text-ink leading-[0.95] ko">
+          시작<br/><span class="display-italic text-gold">하기</span>
+        </h2>
+      </div>
+      <div class="md:col-span-7 md:col-start-6 self-end">
+        <p class="ko text-lg leading-relaxed text-ink2 max-w-2xl">4개의 절차. 5분 안에 새 프로젝트에서 hstack을 사용할 수 있다.</p>
+      </div>
+    </div>
+    <ol class="max-w-5xl mx-auto space-y-0">
+      <li class="entry">
+        <div class="entry-num">I.</div>
+        <div>
+          <h4 class="entry-title ko">스킬 복사</h4>
+          <p class="ko text-ink2 mt-2 mb-3 text-base">hstack 디렉토리를 Claude Code 스킬 폴더에 복사한다.</p>
+          <pre class="ascii">$ cp -r hstack ~/.claude/skills/</pre>
+        </div>
+      </li>
+      <li class="entry">
+        <div class="entry-num">II.</div>
+        <div>
+          <h4 class="entry-title ko">프로젝트 초기화</h4>
+          <p class="ko text-ink2 mt-2 mb-3 text-base">프로젝트 폴더에 input/ 구조를 만든 뒤 원천 자료 배치.</p>
+          <pre class="ascii">$ mkdir -p input/{rfp,template,company_profile,meeting,reference,sample_data}
+$ mkdir -p converted working research output</pre>
+        </div>
+      </li>
+      <li class="entry">
+        <div class="entry-num">III.</div>
+        <div>
+          <h4 class="entry-title ko">Claude Code 시작</h4>
+          <p class="ko text-ink2 mt-2 mb-3 text-base">해당 폴더에서 Claude Code 실행 후 스킬 트리거.</p>
+          <pre class="ascii">$ claude
+> input/ 폴더의 RFP로 제안서 작성해줘</pre>
+        </div>
+      </li>
+      <li class="entry">
+        <div class="entry-num">IV.</div>
+        <div>
+          <h4 class="entry-title ko">12단계 따라가기</h4>
+          <p class="ko text-ink2 mt-2 mb-3 text-base">각 단계 완료 기준에 도달하면 확인 후 다음으로.</p>
+          <pre class="ascii">> 다음 단계로 진행해주세요  (또는 피드백 제공)</pre>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<footer class="border-t border-border py-12">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <p class="ko text-sm text-ink2 italic max-w-md mx-auto">
+      팀장 형진님의 제안서 작성 사고 방식 · Claude Code Skill. 암묵지가 스킬이 된다.
+    </p>
+  </div>
+</footer>
+
+<script>
+/* ============== DATA ============== */
+
+const stages = [
+  {
+    n: 1, short: '문서 수집', name: '문서 수집 및 변환',
+    goal: '원천 문서로부터 깨끗하고 검색 가능한 지식 베이스를 구축한다.',
+    prompt: 'input/ 폴더의 RFP·양식·회의록을 전부 마크다운으로 변환해줘',
+    response: null,
+    narration: '이 프롬프트 하나로 Claude는 input/ 하위 6개 폴더를 순회하며 PDF·HWP·DOCX·XLSX를 마크다운으로 변환한다. 완료 후 프로젝트 루트에 CLAUDE.md(참조 문서 맵)가 생성된다.',
+    sourceRef: 'SKILL.md · §1',
+    inputs: ['input/rfp/*.pdf', 'input/template/*.pdf', 'input/company_profile/*', 'input/meeting/*', 'input/reference/*'],
+    outputs: ['converted/*.md', 'CLAUDE.md'],
+    dod: ['모든 파일이 변환되었다', '페이지·섹션 수 원본 일치', '표·각주 보존', '사용자 확인 완료'],
+    rules: ['baseline'],
+    outSummary: 'converted/*.md · CLAUDE.md',
+    rulesSummary: '항상 적용 (1·4·14)',
+  },
+  {
+    n: 2, short: 'R&R 확정', name: '작성 책임 추출 및 R&R 확정',
+    goal: '섹션-담당자 매핑을 추출하고, 우리 팀의 역할·작성 범위를 확정한다.',
+    prompt: '양식에서 섹션-담당자 매핑 뽑아줘. 우리는 이스트소프트 AI Agent팀, 주관기업(공급기업)이야',
+    response: `양식에서 22개 섹션 추출 완료.
+
+R&R 확정을 위해 순차 질문드리겠습니다 (규칙 6).
+
+  Q1. 소속 확인 — 조직과 팀은?
+
+(Q1 답변 후 Q2: 공급/수요/산학연 역할 확정.)`,
+    narration: 'Claude가 양식 문서에서 전체 섹션을 추출하고, 팀의 역할(주관/참여/위탁)에 따라 섹션을 🟢 우리 담당 / 🟡 참고·협업 / ⚪ 범위 밖으로 분류한다. 규칙 6(의존성 기반 의사결정)이 순차 질의를 구조화한다.',
+    sourceRef: 'SKILL.md · §2',
+    inputs: ['converted/*.md'],
+    outputs: ['working/responsibility_mapping.md', '🟢/🟡/⚪ 분류'],
+    dod: ['섹션-담당자 매핑 표', '소속·역할 확인', '범주 분류 완료', '사용자 확인'],
+    rules: ['baseline', '6', '9'],
+    outSummary: 'responsibility_mapping.md',
+    rulesSummary: '항상 적용 + #6, #9',
+  },
+  {
+    n: 3, short: '제약조건', name: '제약조건 파악',
+    goal: '계획 수립 전, RFP 규정과 양식 가이드라인을 모두 로드한다.',
+    prompt: 'RFP에서 제약조건 추출해줘. 실격 위험·평가 배점표는 별도로 분리',
+    response: `RFP 전수 파싱 완료. 20+개 제약조건 추출:
+
+  C-01  컨소시엄 필수 (공급기업 + 수요기업)
+  C-09  중기부 R&D 이력 누락 시 선정취소
+  C-12  실증현장 사진·동영상 필수 첨부
+  C-14  성과지표 3종 가중치 합계 100%
+  C-20  사업비 3억 이하 · 6개월 단일 차수
+  ... 15개 추가
+
+실격 위험 요소 4건 별도 식별 (C-09가 최긴급).`,
+    narration: '공모공고의 자격·예산·평가·실격 규정이 rfp_constraints.md로, 양식의 섹션별 형식 요구사항이 writing_guidelines.md로 저장된다. 규칙 3(의미적 정확성)이 적용되어 "권고"와 "필수"를 엄격히 구분한다.',
+    sourceRef: 'SKILL.md · §3',
+    inputs: ['converted/*.md (공고공고, 양식)'],
+    outputs: ['working/rfp_constraints.md', 'working/writing_guidelines.md', '평가 배점표'],
+    dod: ['가이드라인·제약조건 파일 저장', '실격 위험 요소 식별', '평가 배점표 추출', '사용자 확인'],
+    rules: ['baseline', '3'],
+    outSummary: 'rfp_constraints.md · writing_guidelines.md',
+    rulesSummary: '항상 적용 + #3',
+  },
+  {
+    n: 4, short: '정보 평가', name: '보유 정보 평가',
+    goal: '제약조건을 반영해 각 섹션의 작성 준비도를 분류한다.',
+    prompt: '각 섹션에 대해 지금 쓸 수 있는지, [TBD]인지, 차단인지 분류해줘',
+    response: `섹션별 준비도 분류:
+
+  ✓ 지금 작성 가능 (3)
+    §5 기술개발일정, §7.2 사업화 전략, §7.3 기대효과
+
+  ⚠ [TBD]로 초안 가능 (6)
+    §1 목표 · §2 방법 · §3 선행연구 · §4.1 연구팀 · §7.1
+
+  ✗ 차단 (3)
+    · 네덱 KPI as-is 기준값 미확보
+    · 실증현장 사진·동영상 미확보
+    · 네덱 중기부 R&D 이력 미확인  ← 선정취소 위험`,
+    narration: 'Claude가 🟢·🟡 섹션 전수를 대상으로 "지금 작성 가능 / [TBD]로 초안 가능 / 차단"으로 분류한다. 차단 항목은 어떤 데이터가 왜 부족한지 명시해 이후 단계의 조사·의사결정에 연결된다.',
+    sourceRef: 'SKILL.md · §4',
+    inputs: ['responsibility_mapping.md', 'rfp_constraints.md', 'writing_guidelines.md'],
+    outputs: ['working/readiness_tracker.md'],
+    dod: ['섹션 준비도 분류', '차단 항목별 필요 데이터 명시', '사용자 확인'],
+    rules: ['baseline', '5', '10'],
+    outSummary: 'readiness_tracker.md',
+    rulesSummary: '항상 적용 + #5, #10',
+  },
+  {
+    n: 5, short: '문헌 조사', name: '문헌 조사',
+    goal: '원천 자료에 없는 외부 근거를 체계적으로 확보한다.',
+    prompt: '외부 근거 필요 항목 목록화하고 조사 축(시장·경쟁사·선행·정책) 제안',
+    response: `외부 근거 필요 항목 8건 확인. 조사 축 제안:
+
+  ① 시장 분석       TAM/SAM/SOM, 성장률
+                   (KISTEP, 통계청, 산업 보고서)
+  ② 경쟁자         기존 솔루션 차별점 분석
+                   (제품 페이지, 특허)
+  ③ 선행 연구      논문·특허·오픈소스
+                   (arXiv, KIPRIS, GitHub)
+  ④ 정책·제도      관련 정부 정책·규제
+                   (보도자료, 법령)
+
+어느 축부터 진행할까요? (축별 순차 승인)`,
+    narration: '4단계에서 차단·TBD된 항목을 4개 축(시장/경쟁자/선행연구/정책)에 매핑하고, 축별로 조사 승인을 받는다. 출처는 공식·준공식·비공식으로 등급화되어 본문에 들어갈 수 있는지가 결정된다.',
+    sourceRef: 'SKILL.md · §5',
+    inputs: ['rfp_constraints.md', 'readiness_tracker.md'],
+    outputs: ['research/market.md', 'research/competitors.md', 'research/prior_art.md', 'research/policy.md'],
+    dod: ['조사 축별 승인/스킵 결정', '출처 등급 태깅', '[미검증] 목록 정리', '사용자 확인'],
+    rules: ['baseline', '3', '5', '6', '7', '10', '11'],
+    outSummary: 'research/*.md',
+    rulesSummary: '항상 적용 + #3, #5, #6, #7, #10, #11',
+  },
+  {
+    n: 6, short: '브레인스토밍', name: '기술 계획 브레인스토밍',
+    goal: '제약조건 안에서 기술적 접근 방식을 반복 토론으로 설계한다.',
+    prompt: 'Agent 구조 3가지 옵션으로 비교해줘 — 6개월·3억 안에서 E2E 증빙 기준',
+    response: `제가 이해한 문제: 6개월·3억 예산 안에서
+공정 데이터와 작업 지식을 동시에 다룰 수 있는
+구조가 필요합니다. 단일 Agent로는 이질 데이터
+소스(MES·품질표·작업일지)를 감당 못합니다.
+이 진단이 맞나요?
+
+(동의 시 트레이드오프 제시)
+
+  (A) 단일 Agent              — 구현 단순, 이질 데이터 실패
+  (B) 2-Agent + 오케스트레이터  — 구조 명확, 6개월 무리
+  (C) 2-Agent Closed-loop      — 공정최적화 + 이상감지  ✓
+      (오케스트레이터 없이 직접 연결)
+
+판단 기준: 6개월 구현 가능성 + 차별화 + E2E 증빙`,
+    narration: '규칙 1-2(문제 진단 먼저)에 따라 Claude가 먼저 문제를 재진술해 확인을 받고, 규칙 2(구조 스스로 도전)로 옵션을 스트레스 테스트한 뒤 2~4개 대안을 트레이드오프와 함께 제시한다. 결정은 의사결정 로그에 판단 기준과 함께 기록된다.',
+    sourceRef: 'SKILL.md · §6',
+    inputs: ['rfp_constraints.md', 'writing_guidelines.md', 'research/*.md'],
+    outputs: ['의사결정 로그 (대안·선택·기준)'],
+    dod: ['주제별 결정 또는 보류 이유 명시', '각 결정의 판단 기준 기록', '사용자 동의'],
+    rules: ['baseline', '1-1', '2', '3', '6', '9'],
+    outSummary: '의사결정 로그',
+    rulesSummary: '항상 적용 + #1-1, #2, #3, #6, #9',
+  },
+  {
+    n: 7, short: '계획 저장', name: '계획 문서 저장 (SSOT)',
+    goal: '모든 의사결정을 단일 계획 문서로 통합한다.',
+    prompt: '지금까지 결정한 내용을 working/master_plan.md에 SSOT로 통합 저장',
+    response: null,
+    narration: '6단계에서 내린 모든 결정이 기술 아키텍처·타임라인·비용·리스크와 함께 master_plan.md로 통합된다. 이후 모든 섹션 작성은 이 파일을 단일 진실 공급원(SSOT)으로 참조한다.',
+    sourceRef: 'SKILL.md · §7',
+    inputs: ['6단계 의사결정 기록'],
+    outputs: ['working/master_plan.md'],
+    dod: ['모든 결정 반영', '보류 항목 표시', 'SSOT로 승인'],
+    rules: ['baseline', '7', '10'],
+    outSummary: 'master_plan.md (SSOT)',
+    rulesSummary: '항상 적용 + #7, #10',
+  },
+  {
+    n: 8, short: '피드백 반영', name: '피드백 반영',
+    goal: '재작업 연쇄 없이 팀 피드백을 의존성 순서로 적용한다.',
+    prompt: '검토자 피드백: "§4.3 경쟁사 비교 약함". 의존성 순서로 반영 계획 제안',
+    response: `피드백 영향 분석 완료.
+변경 계획 (의존성 순서 — 규칙 4):
+
+  ① 구조  §4.3 하위 구조 재편
+          경쟁사 비교 표 추가
+  ② 용어  "유사 솔루션" → "경쟁 솔루션" 일괄
+  ③ 내용  3개 경쟁사 수치 대조 (research/ 참조)
+  ④ 검증  변경 후 §4 전체 Pass 1 재실행
+
+승인 시 단계별로 진행합니다.`,
+    narration: '피드백 수신 즉시 Claude는 구조→용어→내용→검증 순서로 변경 계획을 제안한다. 상충하는 피드백은 조용히 폐기되지 않고 병렬 기록 후 사용자 결정을 기다린다.',
+    sourceRef: 'SKILL.md · §8',
+    inputs: ['master_plan.md', '검토자 피드백'],
+    outputs: ['업데이트된 master_plan.md', '변경 로그'],
+    dod: ['모든 피드백 처리 또는 보류 이유 명시', '변경 의도 기록', 'SSOT 업데이트', '사용자 확인'],
+    rules: ['baseline', '1-1', '3', '12'],
+    outSummary: '업데이트된 master_plan.md',
+    rulesSummary: '항상 적용 + #1-1, #3, #12',
+  },
+  {
+    n: 9, short: '제약 검증', name: '제약조건 검증',
+    goal: '확정된 계획이 모든 RFP 규정을 준수하는지 검증한다.',
+    prompt: '확정 계획이 RFP 규정 지키는지 C-01~C-20 전수 대조',
+    response: `20개 제약조건 전수 대조 완료. 차단 3건:
+
+  ✗ BLOCKER-1  KPI 목표치·가중치 미기재 (C-14)
+       → 네덱 as-is 기준값 확보 필요
+
+  ✗ BLOCKER-2  실증현장 사진·동영상 미확보 (C-12)
+       → 네덱 현장 촬영 필요 (0414 액션아이템)
+
+  ✗ BLOCKER-3  네덱 중기부 R&D 이력 미확인 (C-09)
+       → 누락 시 선정취소 — 최긴급`,
+    narration: '각 제약조건 C-xxx와 계획을 1:1 대조하고, 충돌을 차단(Blocker)·중요(Important)·참고(Note)로 등급화한다. 차단 항목에는 2~3개 해결 방안이 트레이드오프와 함께 제시된다.',
+    sourceRef: 'SKILL.md · §9',
+    inputs: ['master_plan.md', 'rfp_constraints.md'],
+    outputs: ['working/conflicts_report.md'],
+    dod: ['모든 제약조건과 계획 대조', '충돌 보고서 저장', '차단 항목 사용자 결정'],
+    rules: ['baseline', '3', '5', '7', '9', '12'],
+    outSummary: 'conflicts_report.md',
+    rulesSummary: '항상 적용 + #3, #5, #7, #9, #12',
+  },
+  {
+    n: 10, short: '섹션 초안', name: '섹션 초안 작성',
+    goal: 'SSOT + 가이드라인을 바탕으로 제안서 섹션을 작성한다.',
+    prompt: '§1 기술개발 목표 작성. 섹션 구조 계약 적용, 중요도 🔴',
+    response: `§1 기술개발 목표 — 섹션 구조 계약 적용:
+
+  ✓ 참조 파일 선언: master_plan, writing_guidelines,
+                    responsibility_mapping, research/
+  ✓ 🔴 고중요도 (필요성·목표·KPI 8개 직결)
+  ✓ 작성 목표:
+      "다이캐스팅 공정 2-Agent Closed-loop로
+       불량률 15%↓, 에너지 12%↓ 달성 (PoC 증빙)"
+  ✓ KPI 가중치·목표치에 [TBD] 인라인
+
+저장 → output/sections/01_기술개발목표.md`,
+    narration: '섹션마다 "참조 파일 선언 → 중요도 분류 → 섹션 주안점 추출 → 본문 작성 → 인식론적 상태 요약"의 섹션 구조 계약이 적용된다.',
+    sourceRef: 'SKILL.md · §10',
+    inputs: ['master_plan.md', 'writing_guidelines.md', 'research/*.md', 'CLAUDE.md'],
+    outputs: ['output/2-1_사업개요.md', 'output/4-3_기술상세.md', '...'],
+    dod: ['섹션 구조 계약 준수', '중요도 등급 분류', '인식론적 상태 요약', '사용자 확인'],
+    rules: ['baseline', '1-2', '7', '9', '10', '11', '13', '15'],
+    outSummary: 'output/{섹션}.md',
+    rulesSummary: '항상 적용 + #1-2, #7, #9, #10, #11, #13, #15',
+  },
+  {
+    n: 11, short: '검증', name: '검증 (4-pass)',
+    goal: '일관성·사실·전제·서사 4-pass로 산출물을 검증한다.',
+    prompt: '9개 섹션 4-pass 검증 실행',
+    response: `9개 섹션 4-pass 검증:
+
+  Pass 1 · 내부 일관성     ✓ 통과
+      용어·숫자·상호참조·타임라인 전수 표 대조
+  Pass 2 · 사실 정확성     ⚠ 경미 1건
+      └─ "폐루프 / Closed-loop" 용어 혼용
+  Pass 3 · 전제 감사       ✓ 통과
+  Pass 4 · 전체 서사       ✓ 통과
+
+핵심 메시지 일관. §2에서 "폐루프(Closed-loop)"
+첫 병기 후 이후 "폐루프"로 통일 권장.`,
+    narration: '네 개의 분리된 패스가 순차 실행된다. 내부 문서 순환 참조 금지 규칙이 발동해 외부 사실은 반드시 원천 외부 출처로 역추적된다. 규칙 16이 전체 서사의 top-down coherence를 점검한다.',
+    sourceRef: 'SKILL.md · §11',
+    inputs: ['output/*.md', 'converted/*.md', 'research/*.md'],
+    outputs: ['검증 완료 섹션', '외부 확인 체크리스트'],
+    dod: ['Pass 1~4 완료', '발견 문제 수정/보류', '외부 체크리스트 업데이트', '전체 서사 점검'],
+    rules: ['baseline', '5', '10', '11', '16'],
+    outSummary: '검증 완료 섹션',
+    rulesSummary: '항상 적용 + #5, #10, #11, #16',
+  },
+  {
+    n: 12, short: '인수인계', name: '인수인계 산출물 생성',
+    goal: '다음 작업자가 중단된 지점부터 이어받을 수 있도록 산출물을 정리한다.',
+    prompt: 'handover.md 생성. 다음 작업자 이어받을 수 있게 주의 사항 포함',
+    response: `handover.md 생성 완료:
+
+  완성된 섹션 9개 · [TBD] 잔여 9건
+
+  ## 현황 추적
+    🟢 완료 9 · 🟡 [TBD] 있음 6 · ⚪ 범위 밖 8
+
+  ## 외부 확인 체크리스트 (우선순위)
+    ① 네덱 중기부 R&D 이력      ← 선정취소 위험
+    ② 네덱 KPI as-is 기준값
+    ③ 실증현장 사진·동영상
+    ④ 이스트소프트 중기부 R&D 이력 (변형진 확인)
+
+  ## 다음 작업자에게 주의
+    · [1] 과제 개요는 타 섹션 확정 후 마지막 기입
+    · "폐루프(Closed-loop)" 첫 언급 시 병기, 이후 통일`,
+    narration: '완성된 섹션·현황 추적·외부 확인 체크리스트·주의 사항이 한 파일로 통합된다. 규칙 7(평가자를 위해 쓰기)의 정신에 따라, "다음 작업자"도 독자로 명시된다.',
+    sourceRef: 'SKILL.md · §12',
+    inputs: ['전 산출물 (output/, working/, research/)'],
+    outputs: ['handover.md', '외부 확인 체크리스트', '내부 할일 목록'],
+    dod: ['모든 인수인계 항목 저장', '주의 사항 작성', '완료/남은 것 요약 제시'],
+    rules: ['baseline', '7'],
+    outSummary: 'handover.md',
+    rulesSummary: '항상 적용 + #7',
+  },
+];
+
+const rules = [
+  { id:'1',   name:'진행 전 반드시 검증받기', base:true,  summary:'결과 제시 → 사용자 확인 → 다음 단계. 기억이 아닌 원천 자료 재확인.', stagesText:'항상 적용' },
+  { id:'1-1', name:'판단 기준 명시', base:false, summary:'결과뿐 아니라 사용한 기준도 함께 제시. 이의 시 기준부터 점검.', stagesText:'6, 8' },
+  { id:'1-2', name:'문제 진단 먼저, 솔루션 나중', base:false, summary:'"이해한 문제는 [X], 원인은 [Y]" 동의 후 솔루션.', stagesText:'10' },
+  { id:'2',   name:'구조를 스스로 도전하기', base:false, summary:'응집도·결합도·완전성·장애 모드 사전 검증. 불일치 시 재설계.', stagesText:'6' },
+  { id:'3',   name:'의미적으로 정확하기', base:false, summary:'약속 상태·동의 단위 정확히. 절대 상태 격상 금지.', stagesText:'3, 5, 6, 8, 9' },
+  { id:'4',   name:'실행 전 선언하기', base:true,  summary:'파일/단계 진입 전 의도 선언 후 승인. 구조 → 용어 → 내용 → 검증.', stagesText:'항상 적용' },
+  { id:'5',   name:'검증 레이어를 구분하기', base:false, summary:'내부 일관성 / 사실 정확성 / 전제 유효성 / 수신자 맥락 4-pass.', stagesText:'4, 5, 9, 11' },
+  { id:'6',   name:'의존성 기반 의사결정', base:false, summary:'선행 결정 먼저. 프레이밍 이의 시 전제 명시 후 재구성.', stagesText:'2, 5, 6' },
+  { id:'7',   name:'평가자를 위해 쓰기', base:false, summary:'독자 파악 후 내러티브 기여 내용만. 과장·무관 역량 제외.', stagesText:'5, 7, 9, 10, 12' },
+  { id:'8',   name:'스킬 진화 관리', base:false, summary:'반복성·파급력·비자명성 3단 통과 시 보강 제안. 추가 시 소급 적용.', stagesText:'모든 단계' },
+  { id:'9',   name:'실시간 범위 경계 모니터링', base:false, summary:'⚪ 영역·권한 초과·합의 임의 변경 매 순간 감지.', stagesText:'2, 6, 9, 10' },
+  { id:'10',  name:'인식론적 상태(Epistemic State) 추적', base:false, summary:'확인됨 / [과제] / [미검증] / [확인 필요] / [보류] 5가지 상태.', stagesText:'4, 5, 7, 10, 11' },
+  { id:'11',  name:'비례적 검증', base:false, summary:'🔴/🟠/🟡 분류 후 강도 조정. 🔴 × [미검증]은 본문 금지.', stagesText:'5, 10, 11' },
+  { id:'12',  name:'역방향 정보 처리', base:false, summary:'순서 밖 정보 영향 추적 후 사용자 결정. 조용히 반영 금지.', stagesText:'8, 9' },
+  { id:'13',  name:'불완전 정보의 격리 구조화', base:false, summary:'[TBD: 담당자/정보/기한/영향] 형식으로 격리.', stagesText:'10' },
+  { id:'14',  name:'사용자 입력 능동적 이의 제기', base:true,  summary:'수치 오류·논리 충돌·규정 위반·상태 격상·범위 초과 시 따르기 전 이의.', stagesText:'항상 적용' },
+  { id:'15',  name:'파트너 정보 교차 검증', base:false, summary:'파트너 자료도 검증: 내부 일관성·SSOT·RFP·외부 검증.', stagesText:'10' },
+  { id:'16',  name:'전체 서사 일관성', base:false, summary:'10단계 후 top-down coherence 점검. 배점 비례 강조.', stagesText:'11' },
+];
+
+const folders = [
+  { name:'rfp/', title:'공모공고', req:true,  desc:'사업 공고문 PDF. 사업 개요, 지원 내용, 분과별 수행 내용, 평가 기준.', ex:'2026년도 중소제조 특화 Multi AI Agent 개발 시행계획 공고.pdf' },
+  { name:'template/', title:'제안서 양식', req:true, desc:'사업계획서 양식 PDF. 섹션 목차·작성 요령·요약서 양식.', ex:'연구개발계획서 양식.pdf' },
+  { name:'company_profile/', title:'기관 정보', req:true, desc:'주관사·참여사·수요기관 소개. 보유 기술, 수행 실적, 컨소시엄 역할 분담.', ex:'lead_company.pdf · partner_company.pdf · demand_org.pdf' },
+  { name:'meeting/', title:'회의록', req:false, desc:'킥오프·RFP 설명회·컨소시엄 협의 등. 참고자료로만 활용, 공고문 우선.', ex:'kickoff_0409.txt · 내부회의.txt' },
+  { name:'reference/', title:'참고 자료', req:false, desc:'타 기관 초안, 유사 과제 예시. 그대로 확정값 반영 금지 — 구조·표현만 참고.', ex:'연구개발계획서_초안.pdf · feedback.md' },
+  { name:'sample_data/', title:'현장 데이터 샘플', req:false, desc:'수요기관의 실제 데이터 샘플. 현장 이해와 기술 접근 설계의 근거.', ex:'작업일지_Sheet.xlsx · 품질_현황.xlsx' },
+];
+
+/* ============== §II SKILL.md PREVIEW ============== */
+
+const mdContent = {
+  frontmatter: `<span class="md-frontmatter">---</span>
+<span class="md-frontmatter">name</span><span class="md-frontmatter">:</span> <span class="md-bold">proposal-workflow-ko</span>
+<span class="md-frontmatter">description</span><span class="md-frontmatter">:</span>
+  원천 자료 기반 제안서·사업계획서·공모 신청서
+  작성을 위한 구조화 워크플로우. RFP, 회의록,
+  양식, 참고자료를 기반으로 제안서를 작성
+  하려는 경우 이 스킬을 사용한다.
+
+  정부 과제 공모(국고보조, R&amp;D, 상용화 지원
+  사업 등), 컨소시엄 사업계획서, 또는 공식
+  양식과 평가기준이 있는 다자간 산출물
+  작성에 특히 적합하다.
+
+  RFP, 사업계획서, 제안서, 공모, grant proposal
+  등의 용어가 언급되면 트리거한다.
+<span class="md-frontmatter">---</span>
+
+<span class="md-h1"># 제안서 작성 워크플로우</span>
+
+이 스킬은 원천 자료로부터 제출 가능한 제안서를
+협업으로 작성하는 과정을 안내한다.`,
+
+  workflow: `<span class="md-h3">### 단계 순서가 중요한 이유: 재작업 비용</span>
+
+이 워크플로우의 순서는 임의적이지 않다.
+<span class="md-bold">각 단계는 이후 단계의 재작업 비용을 결정한다.</span>
+
+<span class="md-comment">- 범위 확정 없이 쓰면(2단계 스킵) <span class="md-arrow">→</span> 잘못된 섹션 전체를 버려야 한다</span>
+<span class="md-comment">- 제약조건 없이 계획하면(3단계 스킵) <span class="md-arrow">→</span> 계획 전체를 재설계해야 한다</span>
+<span class="md-comment">- SSOT 없이 초안을 쓰면(7단계 스킵) <span class="md-arrow">→</span> 섹션 간 불일치 수작업 수정</span>
+<span class="md-comment">- 검증 없이 제출하면(11단계 스킵) <span class="md-arrow">→</span> 현장점검 실격</span>
+
+<span class="md-code">\`\`\`
+1단계:  문서 수집 및 변환           <span class="md-arrow">→</span> 깨끗한 원천 자료
+2단계:  작성 책임 추출 및 R&amp;R 확정  <span class="md-arrow">→</span> 누가 무엇을 쓰는가
+3단계:  제약조건 파악               <span class="md-arrow">→</span> RFP 규정 + 가이드라인
+4단계:  보유 정보 평가              <span class="md-arrow">→</span> 지금 가능 vs 차단
+5단계:  문헌 조사                   <span class="md-arrow">→</span> 외부 근거 확보
+6단계:  기술 계획 브레인스토밍        <span class="md-arrow">→</span> 아키텍처 + 결정
+7단계:  계획 문서 저장              <span class="md-arrow">→</span> SSOT
+8단계:  피드백 반영                 <span class="md-arrow">→</span> 의존성 순서 변경
+9단계:  제약조건 검증               <span class="md-arrow">→</span> 계획 vs 규정
+10단계: 섹션 초안 작성              <span class="md-arrow">→</span> 제안서 본문
+11단계: 검증                       <span class="md-arrow">→</span> 일관성·팩트·전제
+12단계: 인수인계 산출물 생성         <span class="md-arrow">→</span> handover.md
+\`\`\`</span>`,
+
+  rules: `<span class="md-h2">## 상호작용 프로토콜</span>
+
+<span class="md-h3">### 규칙 색인 (Rule Index)</span>
+
+| ID   | 이름                      | 한 줄 요약                          |
+|------|--------------------------|------------------------------------|
+| <span class="md-bold">1</span>    | 진행 전 반드시 검증받기     | <span class="md-comment">결과 <span class="md-arrow">→</span> 확인 <span class="md-arrow">→</span> 다음 단계</span>          |
+| 1-1  | 판단 기준 명시             | <span class="md-comment">결과뿐 아니라 기준 함께 제시</span>   |
+| 1-2  | 문제 진단 먼저, 솔루션 나중  | <span class="md-comment">문제 정의 정렬 후 솔루션</span>       |
+| 2    | 구조를 스스로 도전         | <span class="md-comment">응집·결합·완전성·장애 검증</span>    |
+| 3    | 의미적 정확성              | <span class="md-comment">약속 상태 격상 금지</span>           |
+| <span class="md-bold">4</span>    | 실행 전 선언              | <span class="md-comment">의도 선언 후 승인</span>             |
+| 5    | 검증 레이어 구분           | <span class="md-comment">4-pass: 내부/사실/전제/맥락</span>   |
+| 6    | 의존성 기반 의사결정        | <span class="md-comment">선행 결정 먼저</span>                |
+| 7    | 평가자를 위해 쓰기         | <span class="md-comment">독자 파악 후 기여 내용만</span>      |
+| 8    | 스킬 진화 관리             | <span class="md-comment">반복성·파급력·비자명성 통과 시</span> |
+| 9    | 범위 경계 모니터링         | <span class="md-comment">⚪ 영역·권한 초과 감지</span>         |
+| 10   | 인식론적 상태 추적         | <span class="md-comment">5가지 상태 명시적 표기</span>         |
+| 11   | 비례적 검증               | <span class="md-comment">🔴/🟠/🟡 중요도별 강도</span>         |
+| 12   | 역방향 정보 처리           | <span class="md-comment">순서 밖 정보 영향 추적</span>         |
+| 13   | TBD 격리 구조화            | <span class="md-comment">[TBD: 담당자/정보/기한/영향]</span>    |
+| <span class="md-bold">14</span>   | 사용자 입력 능동 이의      | <span class="md-comment">오류·충돌·위반 시 따르기 전 이의</span> |
+| 15   | 파트너 정보 교차 검증       | <span class="md-comment">파트너 자료도 검증</span>            |
+| 16   | 전체 서사 일관성           | <span class="md-comment">top-down coherence</span>         |
+
+<span class="md-comment"># 항상 적용 규칙 (모든 단계 활성): 1, 4, 14</span>`,
+};
+
+const mdPreviewEl = document.getElementById('md-preview');
+let mdCurrent = 'frontmatter';
+function renderMd() {
+  mdPreviewEl.innerHTML = `<pre style="margin:0; font-family:inherit; font-size:inherit; line-height:inherit; color:inherit; background:none; padding:0; white-space:pre-wrap; word-break:keep-all;">${mdContent[mdCurrent]}</pre>`;
+}
+document.querySelectorAll('.md-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mdCurrent = btn.dataset.md;
+    document.querySelectorAll('.md-tab').forEach(x => x.classList.toggle('active', x === btn));
+    renderMd();
+  });
+});
+renderMd();
+
+/* ============== §III FOLDERS ============== */
+
+const foldersEl = document.getElementById('folders');
+foldersEl.innerHTML = folders.map((f, i) => `
+  <div class="entry">
+    <div>
+      <div class="entry-num">${['i','ii','iii','iv','v','vi'][i]}</div>
+      <div class="mt-3">${f.req ? '<span class="stamp">필수</span>' : '<span class="stamp stamp-muted">선택</span>'}</div>
+    </div>
+    <div>
+      <div class="flex items-baseline gap-3 mb-1">
+        <code class="font-mono text-base text-gold font-semibold">${f.name}</code>
+        <h4 class="entry-title ko">${f.title}</h4>
+      </div>
+      <p class="ko text-ink2 text-base leading-relaxed">${f.desc}</p>
+      <div class="eyebrow mt-3">예: ${f.ex}</div>
+    </div>
+  </div>
+`).join('');
+
+/* ============== §IV RULES FILTER ============== */
+
+const filterEl = document.getElementById('rule-filter');
+const rowsEl = document.getElementById('rule-rows');
+let activeFilter = 'all';
+
+function rulesActiveAtStage(n) {
+  const s = stages[n - 1];
+  const expanded = new Set();
+  s.rules.forEach(r => {
+    if (r === 'baseline') { expanded.add('1'); expanded.add('4'); expanded.add('14'); }
+    else expanded.add(r);
+  });
+  return expanded;
+}
+
+function renderFilter() {
+  const chips = [
+    { key: 'all', label: 'All · 전체' },
+    { key: 'baseline', label: '항상 적용' },
+    ...stages.map(s => ({ key: `stage-${s.n}`, label: `${s.n}. ${s.short}` })),
+  ];
+  filterEl.innerHTML = chips.map(c =>
+    `<button class="filter-chip ${activeFilter === c.key ? 'active' : ''}" data-key="${c.key}">${c.label}</button>`
+  ).join('');
+  filterEl.querySelectorAll('.filter-chip').forEach(b => {
+    b.addEventListener('click', () => { activeFilter = b.dataset.key; renderFilter(); applyFilter(); });
+  });
+}
+
+function renderRows() {
+  rowsEl.innerHTML = rules.map(r => {
+    const idDisplay = r.id.includes('-') ? r.id : String(r.id).padStart(2, '0');
+    return `
+      <div class="rule-row ${r.base ? 'base' : ''}" data-id="${r.id}">
+        <div>
+          <div class="rule-id">${idDisplay}</div>
+          ${r.base ? '<div class="mt-2"><span class="stamp">항상 적용</span></div>' : ''}
+        </div>
+        <div>
+          <h4 class="rule-title ko">${r.name}</h4>
+          <p class="rule-summary ko">${r.summary}</p>
+          <div class="rule-details">
+            <div class="rule-stages-ref">ACTIVE AT · ${r.stagesText}</div>
+          </div>
+        </div>
+        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+      </div>`;
+  }).join('');
+  rowsEl.querySelectorAll('.rule-row').forEach(row => {
+    row.addEventListener('click', () => row.classList.toggle('open'));
+  });
+}
+
+function applyFilter() {
+  const rows = rowsEl.querySelectorAll('.rule-row');
+  rows.forEach(row => {
+    const id = row.dataset.id;
+    let show = true;
+    if (activeFilter === 'all') show = true;
+    else if (activeFilter === 'baseline') show = rules.find(x => x.id === id).base;
+    else if (activeFilter.startsWith('stage-')) {
+      const n = parseInt(activeFilter.split('-')[1]);
+      show = rulesActiveAtStage(n).has(id);
+    }
+    row.classList.toggle('hidden', !show);
+  });
+}
+
+renderFilter();
+renderRows();
+
+/* ============== §VI STAGE TRACE ============== */
+
+const pillsEl = document.getElementById('stage-pills');
+const innerEl = document.getElementById('trace-panel-inner');
+const panelEl = document.getElementById('trace-panel');
+const idxEl = document.getElementById('trace-idx');
+
+let currentStage = 0;
+let visited = new Set([0]);
+let playing = false;
+let speed = 1;
+let playTimer = null;
+let typeTimer = null;
+
+function renderPills() {
+  pillsEl.innerHTML = stages.map((s, i) => {
+    const cls = i === currentStage ? 'active' : (visited.has(i) ? 'visited' : '');
+    return `<button class="stage-pill ${cls}" data-idx="${i}" title="${s.n}. ${s.short}">${s.n}</button>`;
+  }).join('');
+  pillsEl.querySelectorAll('.stage-pill').forEach(b => {
+    b.addEventListener('click', () => { pause(); selectStage(parseInt(b.dataset.idx)); });
+  });
+}
+
+function ruleChipList(ruleIds) {
+  return ruleIds.map(rid => {
+    if (rid === 'baseline') return 'Baseline (1·4·14)';
+    const r = rules.find(x => x.id === rid);
+    return `#${rid} ${r ? r.name : ''}`;
+  }).join(' · ');
+}
+
+function renderPanel() {
+  const s = stages[currentStage];
+  const nn = String(s.n).padStart(2, '0');
+  idxEl.textContent = nn;
+  innerEl.innerHTML = `
+    <div class="trace-head">
+      <div class="min-w-0 flex-1">
+        <div class="trace-title-row">
+          <span class="trace-numbadge">${s.n}</span>
+          <h3 class="trace-title ko">${s.name}</h3>
+        </div>
+        <p class="trace-goal ko">${s.goal}</p>
+      </div>
+      <a class="source-ref" title="SKILL.md 열기 (링크는 repo URL 확정 후 연결)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+        ${s.sourceRef}
+      </a>
+    </div>
+
+    <div class="terminal" id="terminal">
+      <div class="terminal-head">
+        <span class="dot"></span>
+        <span>claude-code · session</span>
+      </div>
+      <div class="terminal-body">
+        <div class="term-prompt-line">
+          <span class="prompt-prefix">$</span><span class="typed-prompt"></span><span class="caret caret-prompt"></span>
+        </div>
+        <div class="term-response" style="display:none">
+          <div class="term-response-label">Claude</div>
+          <div class="term-response-body"><span class="typed-response"></span><span class="caret caret-response response-caret" style="display:none"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="narration ko">${s.narration}</p>
+
+    <div class="meta-strip">
+      <div><strong>→ 산출</strong><span class="out-text">${s.outSummary}</span></div>
+      <div><strong>⚙ 활성 규칙</strong>${s.rulesSummary}</div>
+    </div>
+
+    <details class="stage-details">
+      <summary>세부 보기</summary>
+      <div class="stage-details-body">
+        <div>
+          <h5>입력 파일 · Input</h5>
+          ${s.inputs.map(x => `<div class="file-line ko">${x}</div>`).join('')}
+        </div>
+        <div>
+          <h5>산출물 · Output</h5>
+          ${s.outputs.map(x => `<div class="file-line out ko">${x}</div>`).join('')}
+        </div>
+        <div>
+          <h5>활성 규칙 · Rules</h5>
+          <div class="text-sm ko text-ink2">${ruleChipList(s.rules)}</div>
+        </div>
+        <div>
+          <h5>Definition of Done</h5>
+          <ul>
+            ${s.dod.map(d => `<li class="ko">${d}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </details>
+  `;
+
+  // Start typing animation for this stage
+  runTypingSequence(s);
+}
+
+function cancelType() {
+  if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; }
+}
+
+function runTypingSequence(stage) {
+  cancelType();
+  const terminal = document.getElementById('terminal');
+  if (!terminal) return;
+
+  const promptEl = terminal.querySelector('.typed-prompt');
+  const promptCaret = terminal.querySelector('.caret-prompt');
+  const responseBlock = terminal.querySelector('.term-response');
+  const responseEl = terminal.querySelector('.typed-response');
+  const responseCaret = terminal.querySelector('.caret-response');
+
+  // Reset state
+  promptEl.textContent = '';
+  responseEl.textContent = '';
+  promptCaret.style.display = 'inline-block';
+  responseCaret.style.display = 'none';
+  responseBlock.style.display = 'none';
+  terminal.classList.remove('done');
+
+  const promptDelay = 45 / speed;
+  const responseDelay = 15 / speed;
+  const pauseBeforeResponse = 700 / speed;
+  const pauseAfterFinish = 2500 / speed;
+
+  // Phase 1: type prompt
+  typeInto(stage.prompt, promptEl, promptDelay, () => {
+    promptCaret.style.display = 'none';
+    if (!stage.response) {
+      finishTyping(terminal, pauseAfterFinish);
+      return;
+    }
+    // Phase 2: pause, reveal response block, type response
+    typeTimer = setTimeout(() => {
+      responseBlock.style.display = 'block';
+      responseCaret.style.display = 'inline-block';
+      typeInto(stage.response, responseEl, responseDelay, () => {
+        finishTyping(terminal, pauseAfterFinish);
+      });
+    }, pauseBeforeResponse);
+  });
+}
+
+function typeInto(text, el, delay, onDone) {
+  let i = 0;
+  function tick() {
+    if (i <= text.length) {
+      el.textContent = text.slice(0, i);
+      i++;
+      typeTimer = setTimeout(tick, delay);
+    } else {
+      typeTimer = null;
+      if (onDone) onDone();
+    }
+  }
+  tick();
+}
+
+function finishTyping(terminal, pause) {
+  terminal.classList.add('done');
+  typeTimer = null;
+  if (playing) {
+    playTimer = setTimeout(() => {
+      if (playing) selectStage((currentStage + 1) % stages.length);
+    }, pause);
+  }
+}
+
+function selectStage(i) {
+  if (i < 0 || i >= stages.length) return;
+  cancelType();
+  if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+  panelEl.classList.add('transitioning');
+  setTimeout(() => {
+    currentStage = i;
+    visited.add(i);
+    renderPills();
+    renderPanel();
+    panelEl.classList.remove('transitioning');
+  }, 180);
+}
+
+function play() {
+  playing = true;
+  document.getElementById('trace-play').innerHTML = '❚❚';
+  const terminal = document.getElementById('terminal');
+  if (terminal && terminal.classList.contains('done')) {
+    playTimer = setTimeout(() => {
+      if (playing) selectStage((currentStage + 1) % stages.length);
+    }, 2500 / speed);
+  }
+  // If still typing, finishTyping handles the advance
+}
+
+function pause() {
+  playing = false;
+  document.getElementById('trace-play').innerHTML = '▶';
+  if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+}
+
+document.getElementById('trace-play').addEventListener('click', () => playing ? pause() : play());
+document.getElementById('trace-prev').addEventListener('click', () => { pause(); selectStage(Math.max(0, currentStage - 1)); });
+document.getElementById('trace-next').addEventListener('click', () => { pause(); selectStage(Math.min(stages.length - 1, currentStage + 1)); });
+document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => {
+  speed = parseFloat(b.dataset.speed);
+  document.querySelectorAll('.speed-btn').forEach(x => x.classList.toggle('active', x === b));
+  // Restart current stage typing with new speed
+  runTypingSequence(stages[currentStage]);
+}));
+
+renderPills();
+renderPanel();
+</script>
+</body>
+</html>
